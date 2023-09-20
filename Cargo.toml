@@ -1,0 +1,13 @@
+[package]
+name = "bevy_vox_mesh_animation"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.11.0" }
+bevy_vox_mesh = { git = "https://github.com/zzhgithub/bevy_vox_mesh.git", branch = "more-info" }
+bevy_mod_inverse_kinematics = { git = "https://github.com/Kurble/bevy_mod_inverse_kinematics/" }
+bevy-inspector-egui = "0.19.0"
+bevy_egui = "0.21.0"
