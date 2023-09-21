@@ -11,3 +11,4 @@ bevy_vox_mesh = { git = "https://github.com/zzhgithub/bevy_vox_mesh.git", branch
 bevy_mod_inverse_kinematics = { git = "https://github.com/Kurble/bevy_mod_inverse_kinematics/" }
 bevy-inspector-egui = "0.19.0"
 bevy_egui = "0.21.0"
+dot_vox = "5.1.1"

@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_vox_mesh::{mate_data::VoxMateData, VoxMeshPlugin};
@@ -19,6 +19,7 @@ fn main() {
         .insert_resource(FaceNow::default())
         .add_systems(Startup, setup)
         .add_systems(Update, (load_mate, load_boy, toggle_faces))
+        // .add_systems(Update, load_ik)
         .run();
 }
 
@@ -43,6 +44,9 @@ impl Default for FaceNow {
         Self { now_face: "face0" }
     }
 }
+
+#[derive(Debug, Component)]
+pub struct ReadyEntity;
 
 fn toggle_faces(
     keyboard_input: Res<Input<KeyCode>>,
@@ -79,6 +83,9 @@ fn load_boy(
     assets: Res<AssetServer>,
     mut stdmats: ResMut<Assets<StandardMaterial>>,
     mut mesh_assets: ResMut<Assets<Mesh>>,
+    children: Query<&Children>,
+    names: Query<&Name>,
+    mut skinned_mesh_inverse_bindposes_assets: ResMut<Assets<SkinnedMeshInverseBindposes>>,
 ) {
     if let Some(_entity) = boy_entity.boy_entity {
         // 这里可以进行其他的处理?
@@ -93,7 +100,9 @@ fn load_boy(
                     stdmats.add(Color::rgb(1., 1., 1.).into()),
                     &mut mesh_assets,
                 );
+                // TODO 这里使用其他方法准备数据!
                 commands.entity(boy).insert((
+                    ReadyEntity,
                     Visibility::Inherited,
                     ComputedVisibility::HIDDEN,
                     GlobalTransform::IDENTITY,

@@ -1082,6 +1082,7 @@ dependencies = [
  "bevy_egui",
  "bevy_mod_inverse_kinematics",
  "bevy_vox_mesh",
+ "dot_vox",
 ]
 
 [[package]]
