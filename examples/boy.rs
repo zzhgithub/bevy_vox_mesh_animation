@@ -1,7 +1,8 @@
-use bevy::{prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes};
+use bevy::{prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes, utils::HashMap};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_vox_mesh::{mate_data::VoxMateData, VoxMeshPlugin};
+use bevy_vox_mesh_animation::{dealers::CommonDealers, perpare_player_data, DealWithJoints};
 use std::f32::consts::PI;
 
 fn main() {
@@ -83,8 +84,6 @@ fn load_boy(
     assets: Res<AssetServer>,
     mut stdmats: ResMut<Assets<StandardMaterial>>,
     mut mesh_assets: ResMut<Assets<Mesh>>,
-    children: Query<&Children>,
-    names: Query<&Name>,
     mut skinned_mesh_inverse_bindposes_assets: ResMut<Assets<SkinnedMeshInverseBindposes>>,
 ) {
     if let Some(_entity) = boy_entity.boy_entity {
@@ -92,34 +91,59 @@ fn load_boy(
     } else {
         if let Some(mate_data) = boy_mate.mate.clone() {
             if mate_data.all_loaded("boy.vox", mesh_assets.as_ref(), assets.as_ref()) {
-                // println!("这里生成模型的详情");
-                let boy = mate_data.to_entity(
+                let mut config_map: HashMap<String, Box<dyn DealWithJoints>> = HashMap::new();
+                let dealer = CommonDealers {};
+                config_map.insert(String::from("face0"), Box::new(dealer.clone()));
+                config_map.insert(String::from("face1"), Box::new(dealer.clone()));
+                config_map.insert(String::from("face2"), Box::new(dealer.clone()));
+                config_map.insert(String::from("face3"), Box::new(dealer.clone()));
+                config_map.insert(String::from("body0"), Box::new(dealer.clone()));
+                config_map.insert(String::from("body1"), Box::new(dealer.clone()));
+
+                let entitiys = perpare_player_data(
                     "boy.vox",
+                    mate_data.clone(),
                     &mut commands,
                     assets.as_ref(),
                     stdmats.add(Color::rgb(1., 1., 1.).into()),
-                    &mut mesh_assets,
+                    mesh_assets.as_mut(),
+                    skinned_mesh_inverse_bindposes_assets.as_mut(),
+                    config_map,
                 );
                 // TODO 这里使用其他方法准备数据!
-                commands.entity(boy).insert((
-                    ReadyEntity,
-                    Visibility::Inherited,
-                    ComputedVisibility::HIDDEN,
-                    GlobalTransform::IDENTITY,
-                    Transform {
-                        translation: Vec3 {
-                            x: 0.0,
-                            y: 1.0 / 40. * 40., // height is 80 so the button is scale*80/2
-                            z: 0.0,
-                        },
-                        scale: Vec3 {
-                            x: 1.0 / 40.,
-                            y: 1.0 / 40.,
-                            z: 1.0 / 40.,
-                        },
-                        ..Default::default()
-                    } * Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
-                ));
+                let boy = commands
+                    .spawn((
+                        ReadyEntity,
+                        Visibility::Inherited,
+                        ComputedVisibility::HIDDEN,
+                        GlobalTransform::IDENTITY,
+                        Transform {
+                            translation: Vec3 {
+                                x: 0.0,
+                                y: 1.0 / 40. * 40., // height is 80 so the button is scale*80/2
+                                z: 0.0,
+                            },
+                            scale: Vec3 {
+                                x: 1.0 / 40.,
+                                y: 1.0 / 40.,
+                                z: 1.0 / 40.,
+                            },
+                            ..Default::default()
+                        } * Transform::from_rotation(Quat::from_axis_angle(Vec3::Y, PI)),
+                    ))
+                    .id();
+                for s in vec![
+                    &String::from("face0"),
+                    &String::from("face1"),
+                    &String::from("face2"),
+                    &String::from("face3"),
+                    &String::from("body0"),
+                    &String::from("body1"),
+                ] {
+                    if let Some(entity) = entitiys.get(s) {
+                        commands.entity(boy).add_child(*entity);
+                    }
+                }
                 boy_entity.boy_entity = Some(boy);
             }
         }

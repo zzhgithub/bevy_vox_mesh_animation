@@ -2,6 +2,7 @@ use bevy::prelude::{Handle, Mesh, PbrBundle, Transform};
 
 use crate::DealWithJoints;
 
+#[derive(Debug, Clone)]
 pub struct CommonDealers;
 
 impl DealWithJoints for CommonDealers {
