@@ -2,7 +2,12 @@ use bevy::{prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes, util
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_vox_mesh::{mate_data::VoxMateData, VoxMeshPlugin};
-use bevy_vox_mesh_animation::{dealers::CommonDealers, perpare_player_data, DealWithJoints};
+use bevy_vox_mesh_animation::{
+    dealers::{Body1Dealers, CommonDealers},
+    perpare_player_data,
+    types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightLeg},
+    DealWithJoints,
+};
 use std::f32::consts::PI;
 
 fn main() {
@@ -19,7 +24,7 @@ fn main() {
         .insert_resource(BoyEntity { boy_entity: None })
         .insert_resource(FaceNow::default())
         .add_systems(Startup, setup)
-        .add_systems(Update, (load_mate, load_boy, toggle_faces))
+        .add_systems(Update, (load_mate, load_boy, toggle_faces, show_joints))
         // .add_systems(Update, load_ik)
         .run();
 }
@@ -77,6 +82,20 @@ fn toggle_faces(
     }
 }
 
+// 显示配置的关节
+fn show_joints(time: Res<Time>, mut gizmos: Gizmos, mut query: Query<(&mut Transform, &RightArm)>) {
+    for (mut transform, _) in &mut query {
+        transform.rotation =
+            Quat::from_axis_angle(Vec3::Z, 0.5 * PI * time.elapsed_seconds().sin());
+        gizmos.sphere(
+            transform.translation,
+            transform.rotation,
+            0.2,
+            Color::YELLOW,
+        );
+    }
+}
+
 fn load_boy(
     mut commands: Commands,
     boy_mate: Res<BoyMate>,
@@ -93,12 +112,13 @@ fn load_boy(
             if mate_data.all_loaded("boy.vox", mesh_assets.as_ref(), assets.as_ref()) {
                 let mut config_map: HashMap<String, Box<dyn DealWithJoints>> = HashMap::new();
                 let dealer = CommonDealers {};
+                let body1_dealer = Body1Dealers {};
                 config_map.insert(String::from("face0"), Box::new(dealer.clone()));
                 config_map.insert(String::from("face1"), Box::new(dealer.clone()));
                 config_map.insert(String::from("face2"), Box::new(dealer.clone()));
                 config_map.insert(String::from("face3"), Box::new(dealer.clone()));
                 config_map.insert(String::from("body0"), Box::new(dealer.clone()));
-                config_map.insert(String::from("body1"), Box::new(dealer.clone()));
+                config_map.insert(String::from("body1"), Box::new(body1_dealer.clone()));
 
                 let entitiys = perpare_player_data(
                     "boy.vox",

@@ -11,6 +11,8 @@ use dot_vox::SceneNode;
 
 // 制作和使用 vox 作为动画的工具
 pub mod dealers;
+pub mod mesh_helper;
+pub mod types;
 pub trait DealWithJoints: Send + Sync + 'static {
     fn deal(
         &self,
@@ -129,6 +131,7 @@ fn deal_scene_node(
             node.insert((
                 visibilty,
                 ComputedVisibility::HIDDEN,
+                Transform::IDENTITY,
                 GlobalTransform::IDENTITY,
             ));
             result.push(node.id());

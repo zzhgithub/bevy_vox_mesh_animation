@@ -766,6 +766,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_mesh_tools"
+version = "0.1.0"
+source = "git+https://github.com/DGriffin91/bevy_mod_mesh_tools.git#d367a9fbf056276f8c2f39031ab35b312d956d67"
+dependencies = [
+ "bevy",
+ "thiserror",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,6 +1090,7 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_egui",
  "bevy_mod_inverse_kinematics",
+ "bevy_mod_mesh_tools",
  "bevy_vox_mesh",
  "dot_vox",
 ]
