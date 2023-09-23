@@ -3,9 +3,9 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_vox_mesh::{mate_data::VoxMateData, VoxMeshPlugin};
 use bevy_vox_mesh_animation::{
-    dealers::{Body1Dealers, CommonDealers},
+    dealers::{Body0Dealers, Body1Dealers, CommonDealers},
     perpare_player_data,
-    types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightLeg},
+    types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightLeg, RightHand},
     DealWithJoints,
 };
 use std::f32::consts::PI;
@@ -83,7 +83,7 @@ fn toggle_faces(
 }
 
 // 显示配置的关节
-fn show_joints(time: Res<Time>, mut gizmos: Gizmos, mut query: Query<(&mut Transform, &RightArm)>) {
+fn show_joints(time: Res<Time>, mut gizmos: Gizmos, mut query: Query<(&mut Transform, &RightHand)>) {
     for (mut transform, _) in &mut query {
         transform.rotation =
             Quat::from_axis_angle(Vec3::Z, 0.5 * PI * time.elapsed_seconds().sin());
@@ -113,11 +113,12 @@ fn load_boy(
                 let mut config_map: HashMap<String, Box<dyn DealWithJoints>> = HashMap::new();
                 let dealer = CommonDealers {};
                 let body1_dealer = Body1Dealers {};
+                let body0_dealer = Body0Dealers {};
                 config_map.insert(String::from("face0"), Box::new(dealer.clone()));
                 config_map.insert(String::from("face1"), Box::new(dealer.clone()));
                 config_map.insert(String::from("face2"), Box::new(dealer.clone()));
                 config_map.insert(String::from("face3"), Box::new(dealer.clone()));
-                config_map.insert(String::from("body0"), Box::new(dealer.clone()));
+                config_map.insert(String::from("body0"), Box::new(body0_dealer.clone()));
                 config_map.insert(String::from("body1"), Box::new(body1_dealer.clone()));
 
                 let entitiys = perpare_player_data(

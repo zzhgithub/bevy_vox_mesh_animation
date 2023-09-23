@@ -14,7 +14,7 @@ use bevy::{
 use bevy_mod_mesh_tools::{mesh_len, mesh_normals, mesh_positions, mesh_uvs};
 
 use crate::{
-    types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightLeg},
+    types::{AnimatedJoint, Body, LeftArm, LeftHand, LeftLeg, RightArm, RightHand, RightLeg},
     DealWithJoints,
 };
 
@@ -191,5 +191,128 @@ fn mesh_color(mesh: &Mesh) -> Iter<Vec4> {
             std::mem::transmute::<Iter<[f32; 4]>, Iter<Vec4>>(v.iter())
         },
         _ => [].iter(),
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Body0Dealers;
+
+impl DealWithJoints for Body0Dealers {
+    fn deal(
+        &self,
+        handle: Handle<Mesh>,
+        commands: &mut bevy::prelude::Commands,
+        mesh_assets: &mut bevy::prelude::Assets<Mesh>,
+        material_handle: Handle<bevy::prelude::StandardMaterial>,
+        skinned_mesh_inverse_bindposes_assets: &mut bevy::prelude::Assets<
+            SkinnedMeshInverseBindposes,
+        >,
+    ) -> Option<bevy::prelude::Entity> {
+        // 这里记录 两个手 还有 一个身体的标记
+        if let Some(mesh) = mesh_assets.get(&handle) {
+            let mut joints_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+
+            let positions_iter = mesh_positions(mesh);
+            // 这要重重新转成数据
+            let mesh_normals_iter = mesh_normals(mesh);
+            let mesh_uvs_iter = mesh_uvs(mesh);
+            let mesh_color_iter = mesh_color(mesh);
+            // 生成 joint index 并且配置权重
+            joints_mesh.insert_attribute(
+                Mesh::ATTRIBUTE_JOINT_INDEX,
+                VertexAttributeValues::Uint16x4(vec![[0, 1, 2, 0]; mesh_len(mesh)]),
+            );
+            // 配置权限
+            let joint_weight: Vec<[f32; 4]> = positions_iter
+                .clone()
+                .map(|v3| {
+                    let Vec3 { x, y: _, z: _ } = v3;
+                    return if *x < -15.0 {
+                        [0.0, 1.0, 0.0, 0.0]
+                    } else if *x < 15.0 {
+                        [0.0, 0.0, 1.0, 0.0]
+                    } else {
+                        [1.0, 0.0, 0.0, 0.0]
+                    };
+                })
+                .collect();
+            joints_mesh.insert_attribute(Mesh::ATTRIBUTE_JOINT_WEIGHT, joint_weight);
+            let position: Vec<[f32; 3]> = positions_iter.map(|x| [x.x, x.y, x.z]).collect();
+            joints_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, position);
+            let normals: Vec<[f32; 3]> = mesh_normals_iter.map(|p| [p.x, p.y, p.z]).collect();
+            joints_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+            let uvs: Vec<[f32; 2]> = mesh_uvs_iter.map(|p| [p.x, p.y]).collect();
+            joints_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+            let color: Vec<[f32; 4]> = mesh_color_iter.map(|p| [p.x, p.y, p.z, p.w]).collect();
+            joints_mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, color);
+            let indices = mesh.indices().unwrap();
+            joints_mesh.set_indices(Some(indices.clone()));
+
+            let r_h = Vec3::new(-8.0, 6.0, -1.5);
+            let l_h = Vec3::new(8.0, 6.0, -1.5);
+            let b = Vec3::new(3.5, 24.5, -1.);
+
+            let r_h = Vec3::ZERO;
+            let l_h = Vec3::ZERO;
+            let b = Vec3::ZERO;
+
+            let r_h_local = Vec3::ZERO;
+            let l_h_local = Vec3::ZERO;
+            let b_local = Vec3::ZERO;
+
+            // 这里绑定四个joint!
+            let inverse_bindposes =
+                skinned_mesh_inverse_bindposes_assets.add(SkinnedMeshInverseBindposes::from(vec![
+                    Mat4::from_translation(r_h.clone()),
+                    Mat4::from_translation(l_h.clone()),
+                    Mat4::from_translation(b.clone()),
+                ]));
+
+            let entitiy1 = commands
+                .spawn((
+                    RightHand,
+                    AnimatedJoint,
+                    TransformBundle {
+                        local: Transform::from_translation(r_h_local),
+                        ..Default::default()
+                    },
+                ))
+                .id();
+            let entitiy2 = commands
+                .spawn((
+                    LeftHand,
+                    AnimatedJoint,
+                    TransformBundle {
+                        local: Transform::from_translation(l_h_local),
+                        ..Default::default()
+                    },
+                ))
+                .id();
+            let entitiy3 = commands
+                .spawn((
+                    Body,
+                    AnimatedJoint,
+                    TransformBundle {
+                        local: Transform::from_translation(b_local),
+                        ..Default::default()
+                    },
+                ))
+                .id();
+            let joint_entities = vec![entitiy1, entitiy2, entitiy3];
+            let ret = commands
+                .spawn(PbrBundle {
+                    mesh: mesh_assets.add(joints_mesh),
+                    material: material_handle,
+                    ..Default::default()
+                })
+                .push_children(&joint_entities)
+                .insert(SkinnedMesh {
+                    inverse_bindposes: inverse_bindposes.clone(),
+                    joints: joint_entities,
+                })
+                .id();
+            return Some(ret);
+        }
+        None
     }
 }
