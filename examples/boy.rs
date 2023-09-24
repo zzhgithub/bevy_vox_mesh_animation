@@ -1,11 +1,11 @@
 use bevy::{prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes, utils::HashMap};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_vox_mesh::{mate_data::VoxMateData, VoxMeshPlugin};
+use bevy_vox_mesh::{vox_scene_info::VoxSceneInfo, VoxMeshPlugin};
 use bevy_vox_mesh_animation::{
     dealers::{Body0Dealers, Body1Dealers, CommonDealers},
     perpare_player_data,
-    types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightLeg, RightHand},
+    types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightHand, RightLeg},
     DealWithJoints,
 };
 use std::f32::consts::PI;
@@ -36,8 +36,8 @@ pub struct BoyEntity {
 
 #[derive(Debug, Resource, Clone)]
 pub struct BoyMate {
-    pub handle: Option<Handle<VoxMateData>>,
-    pub mate: Option<VoxMateData>,
+    pub handle: Option<Handle<VoxSceneInfo>>,
+    pub mate: Option<VoxSceneInfo>,
 }
 
 #[derive(Debug, Resource, Clone)]
@@ -83,7 +83,11 @@ fn toggle_faces(
 }
 
 // 显示配置的关节
-fn show_joints(time: Res<Time>, mut gizmos: Gizmos, mut query: Query<(&mut Transform, &RightHand)>) {
+fn show_joints(
+    time: Res<Time>,
+    mut gizmos: Gizmos,
+    mut query: Query<(&mut Transform, &RightHand)>,
+) {
     for (mut transform, _) in &mut query {
         transform.rotation =
             Quat::from_axis_angle(Vec3::Z, 0.5 * PI * time.elapsed_seconds().sin());
@@ -154,12 +158,12 @@ fn load_boy(
                     ))
                     .id();
                 for s in vec![
-                    &String::from("face0"),
-                    &String::from("face1"),
-                    &String::from("face2"),
-                    &String::from("face3"),
+                    // &String::from("face0"),
+                    // &String::from("face1"),
+                    // &String::from("face2"),
+                    // &String::from("face3"),
                     &String::from("body0"),
-                    &String::from("body1"),
+                    // &String::from("body1"),
                 ] {
                     if let Some(entity) = entitiys.get(s) {
                         commands.entity(boy).add_child(*entity);
@@ -171,7 +175,7 @@ fn load_boy(
     }
 }
 
-fn load_mate(mate_assets: Res<Assets<VoxMateData>>, mut boy_mate: ResMut<BoyMate>) {
+fn load_mate(mate_assets: Res<Assets<VoxSceneInfo>>, mut boy_mate: ResMut<BoyMate>) {
     if let Some(handle) = boy_mate.handle.clone() {
         match boy_mate.mate {
             Some(_) => {}
@@ -191,7 +195,7 @@ fn setup(
     mut boy_mate: ResMut<BoyMate>,
     assets: Res<AssetServer>,
 ) {
-    let mate_data_handle: Handle<VoxMateData> = assets.load("boy.vox#mate_data");
+    let mate_data_handle: Handle<VoxSceneInfo> = assets.load("boy.vox#mate_data");
     boy_mate.handle = Some(mate_data_handle);
 
     commands.spawn(Camera3dBundle {

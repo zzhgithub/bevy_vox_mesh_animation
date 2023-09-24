@@ -6,7 +6,7 @@ use bevy::{
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     utils::HashMap,
 };
-use bevy_vox_mesh::mate_data::{LayerData, VoxMateData};
+use bevy_vox_mesh::vox_scene_info::{VoxSceneInfo, LayerData};
 use dot_vox::SceneNode;
 
 // 制作和使用 vox 作为动画的工具
@@ -28,7 +28,7 @@ pub struct DealerHolder {}
 
 pub fn perpare_player_data(
     base_id: &'static str,
-    vox_mate_data: VoxMateData,
+    vox_mate_data: VoxSceneInfo,
     commands: &mut Commands,
     asset_server: &AssetServer,
     material_handle: Handle<StandardMaterial>,
