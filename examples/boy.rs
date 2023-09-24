@@ -158,12 +158,12 @@ fn load_boy(
                     ))
                     .id();
                 for s in vec![
-                    // &String::from("face0"),
-                    // &String::from("face1"),
-                    // &String::from("face2"),
-                    // &String::from("face3"),
+                    &String::from("face0"),
+                    &String::from("face1"),
+                    &String::from("face2"),
+                    &String::from("face3"),
                     &String::from("body0"),
-                    // &String::from("body1"),
+                    &String::from("body1"),
                 ] {
                     if let Some(entity) = entitiys.get(s) {
                         commands.entity(boy).add_child(*entity);

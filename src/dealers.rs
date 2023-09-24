@@ -171,6 +171,8 @@ impl DealWithJoints for Body1Dealers {
                 .spawn(PbrBundle {
                     mesh: mesh_assets.add(joints_mesh),
                     material: material_handle,
+                    // 测试临时隐藏
+                    // visibility: bevy::prelude::Visibility::Hidden,
                     ..Default::default()
                 })
                 .push_children(&joint_entities)
@@ -248,16 +250,16 @@ impl DealWithJoints for Body0Dealers {
             let indices = mesh.indices().unwrap();
             joints_mesh.set_indices(Some(indices.clone()));
 
-            let r_h = Vec3::new(0.0, 0.0, 0.0);
-            let l_h = Vec3::new(8.0, 6.0, -1.5);
-            let b = Vec3::new(3.5, 24.5, -1.);
+            let r_h = Vec3::new(-24.0, 7.0, -2.5);
+            let l_h = Vec3::new(24.0, 7.0, -2.5);
+            let b = Vec3::new(0.0, 0.0, -0.0);
 
             // let r_h = Vec3::ZERO;
-            let l_h = Vec3::ZERO;
-            let b = Vec3::ZERO;
+            // let l_h = Vec3::ZERO;
+            // let b = Vec3::ZERO;
 
-            let r_h_local = Vec3::ZERO;
-            let l_h_local = Vec3::ZERO;
+            let r_h_local = Vec3::new(24.0, -7.0, 2.5);
+            let l_h_local = Vec3::new(-24.0, -7.0, 2.5);
             let b_local = Vec3::ZERO;
 
             // 这里绑定四个joint!
@@ -305,7 +307,7 @@ impl DealWithJoints for Body0Dealers {
                     material: material_handle,
                     ..Default::default()
                 })
-                // .push_children(&joint_entities)
+                .push_children(&joint_entities)
                 .insert(SkinnedMesh {
                     inverse_bindposes: inverse_bindposes.clone(),
                     joints: joint_entities,
