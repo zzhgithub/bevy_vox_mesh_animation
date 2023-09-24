@@ -86,17 +86,22 @@ fn toggle_faces(
 fn show_joints(
     time: Res<Time>,
     mut gizmos: Gizmos,
-    mut query: Query<(&mut Transform, &RightHand)>,
+    mut query: Query<(&mut Transform, &RightArm)>,
+    boy_entity: Res<BoyEntity>,
+    transform_query: Query<&Transform, Without<RightArm>>,
 ) {
-    for (mut transform, _) in &mut query {
-        transform.rotation =
-            Quat::from_axis_angle(Vec3::Z, 0.5 * PI * time.elapsed_seconds().sin());
-        gizmos.sphere(
-            transform.translation,
-            transform.rotation,
-            0.2,
-            Color::YELLOW,
-        );
+    if let Some(entity) = boy_entity.boy_entity {
+        if let Ok(trf) = transform_query.get(entity) {
+            // 这里可以进行其他的处理?
+            {
+                for (mut transform, _) in &mut query {
+                    transform.rotation =
+                        Quat::from_axis_angle(Vec3::Z, 0.5 * PI * time.elapsed_seconds().sin());
+                    let new_trf = trf.clone().mul_transform(transform.clone());
+                    gizmos.sphere(new_trf.translation, new_trf.rotation, 0.2, Color::RED);
+                }
+            }
+        }
     }
 }
 
@@ -195,7 +200,7 @@ fn setup(
     mut boy_mate: ResMut<BoyMate>,
     assets: Res<AssetServer>,
 ) {
-    let mate_data_handle: Handle<VoxSceneInfo> = assets.load("boy.vox#mate_data");
+    let mate_data_handle: Handle<VoxSceneInfo> = assets.load("boy.vox#scene");
     boy_mate.handle = Some(mate_data_handle);
 
     commands.spawn(Camera3dBundle {

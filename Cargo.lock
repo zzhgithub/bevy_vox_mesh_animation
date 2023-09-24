@@ -1072,7 +1072,7 @@ dependencies = [
 [[package]]
 name = "bevy_vox_mesh"
 version = "0.7.0"
-source = "git+https://github.com/zzhgithub/bevy_vox_mesh.git?branch=more-info#1cdbb2dbc00a650c8ade70100e4ec9e096780961"
+source = "git+https://github.com/zzhgithub/bevy_vox_mesh.git?branch=more-info#4c6e1e23b0a92fa6efd10b3d53699d84226b0eed"
 dependencies = [
  "anyhow",
  "bevy",

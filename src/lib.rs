@@ -6,12 +6,13 @@ use bevy::{
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     utils::HashMap,
 };
-use bevy_vox_mesh::vox_scene_info::{VoxSceneInfo, LayerData};
+use bevy_vox_mesh::vox_scene_info::{LayerData, VoxSceneInfo};
 use dot_vox::SceneNode;
 
 // 制作和使用 vox 作为动画的工具
 pub mod dealers;
 pub mod mesh_helper;
+pub mod pose;
 pub mod types;
 pub trait DealWithJoints: Send + Sync + 'static {
     fn deal(
