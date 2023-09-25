@@ -11,6 +11,7 @@ use bevy_vox_mesh::{vox_scene_info::VoxSceneInfo, VoxMeshPlugin};
 use bevy_vox_mesh_animation::{
     dealers::{Body0Dealers, Body1Dealers, CommonDealers},
     perpare_player_data,
+    pose::{BoyEntity, PoseEditPlugin},
     types::{AnimatedJoint, LeftArm, LeftLeg, RightArm, RightHand, RightLeg},
     DealWithJoints,
 };
@@ -31,7 +32,7 @@ fn main() {
         .add_plugins(EguiPlugin)
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VoxMeshPlugin::default())
-        .register_type::<Entity>()
+        .add_plugins(PoseEditPlugin)
         .insert_resource(BoyMate {
             handle: None,
             mate: None,
@@ -53,11 +54,6 @@ fn main() {
         )
         // .add_systems(Update, load_ik)
         .run();
-}
-
-#[derive(Debug, Resource)]
-pub struct BoyEntity {
-    pub boy_entity: Option<Entity>,
 }
 
 #[derive(Debug, Resource, Clone)]
