@@ -22,6 +22,7 @@ pub trait DealWithJoints: Send + Sync + 'static {
         mesh_assets: &mut Assets<Mesh>,
         material_handle: Handle<StandardMaterial>,
         skinned_mesh_inverse_bindposes_assets: &mut Assets<SkinnedMeshInverseBindposes>,
+        materials: &mut Assets<StandardMaterial>,
     ) -> Option<Entity>;
 }
 
@@ -36,6 +37,7 @@ pub fn perpare_player_data(
     mesh_assets: &mut Assets<Mesh>,
     skinned_mesh_inverse_bindposes_assets: &mut Assets<SkinnedMeshInverseBindposes>,
     perpare_map: HashMap<String, Box<dyn DealWithJoints>>,
+    materials: &mut Assets<StandardMaterial>,
 ) -> HashMap<String, Entity> {
     let mut result: HashMap<String, Entity> = HashMap::new();
     for scene_node in vox_mate_data.scenes.iter() {
@@ -58,6 +60,7 @@ pub fn perpare_player_data(
                             mesh_assets,
                             &vox_mate_data.layer_map,
                             skinned_mesh_inverse_bindposes_assets,
+                            materials,
                             dealer,
                         );
                         result.insert(name.clone(), ret[0]);
@@ -80,6 +83,7 @@ fn deal_scene_node(
     mesh_assets: &mut Assets<Mesh>,
     layer_map: &HashMap<u32, bool>,
     skinned_mesh_inverse_bindposes_assets: &mut Assets<SkinnedMeshInverseBindposes>,
+    materials: &mut Assets<StandardMaterial>,
     deal_with_joints: &Box<dyn DealWithJoints>,
 ) -> Vec<Entity> {
     let mut result: Vec<Entity> = Vec::new();
@@ -116,6 +120,7 @@ fn deal_scene_node(
                 mesh_assets,
                 layer_map,
                 skinned_mesh_inverse_bindposes_assets,
+                materials,
                 deal_with_joints,
             );
             node.push_children(&children);
@@ -153,6 +158,7 @@ fn deal_scene_node(
                     mesh_assets,
                     layer_map,
                     skinned_mesh_inverse_bindposes_assets,
+                    materials,
                     deal_with_joints,
                 );
                 result.extend(children);
@@ -178,6 +184,7 @@ fn deal_scene_node(
                     mesh_assets,
                     material_handle.clone(),
                     skinned_mesh_inverse_bindposes_assets,
+                    materials,
                 ) {
                     result.push(entity);
                 }

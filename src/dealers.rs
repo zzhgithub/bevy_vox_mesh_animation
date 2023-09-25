@@ -1,7 +1,10 @@
 use std::slice::Iter;
 
 use bevy::{
-    prelude::{BuildChildren, Handle, Mat4, Mesh, PbrBundle, Transform, Vec3, Vec4},
+    prelude::{
+        shape, AlphaMode, Assets, BuildChildren, Color, Handle, Mat4, Mesh, PbrBundle,
+        StandardMaterial, Transform, Vec3, Vec4,
+    },
     render::{
         mesh::{
             skinning::{SkinnedMesh, SkinnedMeshInverseBindposes},
@@ -31,6 +34,7 @@ impl DealWithJoints for CommonDealers {
         _skinned_mesh_inverse_bindposes_assets: &mut bevy::prelude::Assets<
             bevy::render::mesh::skinning::SkinnedMeshInverseBindposes,
         >,
+        materials: &mut Assets<StandardMaterial>,
     ) -> Option<bevy::prelude::Entity> {
         if let Some(mesh) = mesh_assets.get(&handle) {
             let entity = commands
@@ -62,6 +66,7 @@ impl DealWithJoints for Body1Dealers {
         skinned_mesh_inverse_bindposes_assets: &mut bevy::prelude::Assets<
             bevy::render::mesh::skinning::SkinnedMeshInverseBindposes,
         >,
+        materials: &mut Assets<StandardMaterial>,
     ) -> Option<bevy::prelude::Entity> {
         // 获取mesh 然后添加
         if let Some(mesh) = mesh_assets.get(&handle) {
@@ -115,6 +120,12 @@ impl DealWithJoints for Body1Dealers {
             let l_l = Vec3::new(3.5, 24.5, -1.);
             let r_l = Vec3::new(-3.5, 24.5, -1.);
 
+            let r_a_local = Vec3::new(8.0, -6.0, 1.5);
+            let l_a_local = Vec3::new(-8.0, -6.0, 1.5);
+            let l_l_local = Vec3::new(-3.5, -24.5, 1.);
+            let r_l_local = Vec3::new(3.5, -24.5, 1.);
+
+            // let l_a_local =
             // 这里绑定四个joint!
             let inverse_bindposes =
                 skinned_mesh_inverse_bindposes_assets.add(SkinnedMeshInverseBindposes::from(vec![
@@ -126,44 +137,72 @@ impl DealWithJoints for Body1Dealers {
                 ]));
 
             let entitiy1 = commands
-                .spawn((
-                    RightArm,
-                    AnimatedJoint,
-                    TransformBundle {
-                        local: Transform::from_translation(Vec3::new(8.0, -6.0, 1.5)),
+                .spawn(PbrBundle {
+                    transform: Transform::from_translation(r_a_local),
+                    mesh: mesh_assets.add(Mesh::from(shape::UVSphere {
+                        radius: 6.0,
+                        sectors: 7,
+                        stacks: 7,
+                    })),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgba(0.0, 1.0, 0.0, 0.5),
+                        alpha_mode: AlphaMode::Blend,
                         ..Default::default()
-                    },
-                ))
+                    }),
+                    ..Default::default()
+                })
+                .insert((RightArm, AnimatedJoint))
                 .id();
             let entitiy2 = commands
-                .spawn((
-                    LeftArm,
-                    AnimatedJoint,
-                    TransformBundle {
-                        local: Transform::from_translation(Vec3::new(-8.0, -6.0, 1.5)),
+                .spawn(PbrBundle {
+                    transform: Transform::from_translation(l_a_local),
+                    mesh: mesh_assets.add(Mesh::from(shape::UVSphere {
+                        radius: 6.0,
+                        sectors: 7,
+                        stacks: 7,
+                    })),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgba(0.0, 1.0, 0.0, 0.5),
+                        alpha_mode: AlphaMode::Blend,
                         ..Default::default()
-                    },
-                ))
+                    }),
+                    ..Default::default()
+                })
+                .insert((LeftArm, AnimatedJoint))
                 .id();
             let entitiy3 = commands
-                .spawn((
-                    LeftLeg,
-                    AnimatedJoint,
-                    TransformBundle {
-                        local: Transform::from_translation(Vec3::new(-3.5, -24.5, 1.)),
+                .spawn(PbrBundle {
+                    transform: Transform::from_translation(l_l_local),
+                    mesh: mesh_assets.add(Mesh::from(shape::UVSphere {
+                        radius: 6.0,
+                        sectors: 7,
+                        stacks: 7,
+                    })),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgba(0.0, 0.0, 1.0, 0.5),
+                        alpha_mode: AlphaMode::Blend,
                         ..Default::default()
-                    },
-                ))
+                    }),
+                    ..Default::default()
+                })
+                .insert((LeftLeg, AnimatedJoint))
                 .id();
             let entitiy4 = commands
-                .spawn((
-                    RightLeg,
-                    AnimatedJoint,
-                    TransformBundle {
-                        local: Transform::from_translation(Vec3::new(3.5, -24.5, 1.)),
+                .spawn(PbrBundle {
+                    transform: Transform::from_translation(r_l_local),
+                    mesh: mesh_assets.add(Mesh::from(shape::UVSphere {
+                        radius: 6.0,
+                        sectors: 7,
+                        stacks: 7,
+                    })),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgba(0.0, 0.0, 1.0, 0.5),
+                        alpha_mode: AlphaMode::Blend,
                         ..Default::default()
-                    },
-                ))
+                    }),
+                    ..Default::default()
+                })
+                .insert((RightLeg, AnimatedJoint))
                 .id();
             let joint_entities = vec![entitiy1, entitiy2, entitiy3, entitiy4];
             // 这里只能使用 Joint控制物体的大小 和 位置 那么这里怎么控制他们的位置和 大小呢？
@@ -209,6 +248,7 @@ impl DealWithJoints for Body0Dealers {
         skinned_mesh_inverse_bindposes_assets: &mut bevy::prelude::Assets<
             SkinnedMeshInverseBindposes,
         >,
+        materials: &mut Assets<StandardMaterial>,
     ) -> Option<bevy::prelude::Entity> {
         // 这里记录 两个手 还有 一个身体的标记
         if let Some(mesh) = mesh_assets.get(&handle) {
@@ -269,26 +309,39 @@ impl DealWithJoints for Body0Dealers {
                     Mat4::from_translation(l_h.clone()),
                     Mat4::from_translation(b.clone()),
                 ]));
-
             let entitiy1 = commands
-                .spawn((
-                    RightHand,
-                    AnimatedJoint,
-                    TransformBundle {
-                        local: Transform::from_translation(r_h_local),
+                .spawn(PbrBundle {
+                    transform: Transform::from_translation(r_h_local),
+                    mesh: mesh_assets.add(Mesh::from(shape::UVSphere {
+                        radius: 6.0,
+                        sectors: 7,
+                        stacks: 7,
+                    })),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgba(1.0, 0.0, 0.0, 0.5),
+                        alpha_mode: AlphaMode::Blend,
                         ..Default::default()
-                    },
-                ))
+                    }),
+                    ..Default::default()
+                })
+                .insert((RightHand, AnimatedJoint))
                 .id();
             let entitiy2 = commands
-                .spawn((
-                    LeftHand,
-                    AnimatedJoint,
-                    TransformBundle {
-                        local: Transform::from_translation(l_h_local),
+                .spawn(PbrBundle {
+                    transform: Transform::from_translation(l_h_local),
+                    mesh: mesh_assets.add(Mesh::from(shape::UVSphere {
+                        radius: 6.0,
+                        sectors: 7,
+                        stacks: 7,
+                    })),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgba(1.0, 0.0, 0.0, 0.5),
+                        alpha_mode: AlphaMode::Blend,
                         ..Default::default()
-                    },
-                ))
+                    }),
+                    ..Default::default()
+                })
+                .insert((LeftHand, AnimatedJoint))
                 .id();
             let entitiy3 = commands
                 .spawn((

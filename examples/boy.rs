@@ -1,6 +1,12 @@
-use bevy::{prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes, utils::HashMap};
+use bevy::{
+    prelude::*, render::mesh::skinning::SkinnedMeshInverseBindposes, utils::HashMap,
+    window::PresentMode,
+};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_mod_picking::{prelude::PickingInteraction, DefaultPickingPlugins};
+use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
+use bevy_transform_gizmo::{GizmoTransformable, TransformGizmo, TransformGizmoPlugin};
 use bevy_vox_mesh::{vox_scene_info::VoxSceneInfo, VoxMeshPlugin};
 use bevy_vox_mesh_animation::{
     dealers::{Body0Dealers, Body1Dealers, CommonDealers},
@@ -12,7 +18,16 @@ use std::f32::consts::PI;
 
 fn main() {
     App::default()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((
+            DefaultPlugins,
+            DefaultPickingPlugins,
+            TransformGizmoPlugin::new(
+                Quat::from_rotation_y(-0.2), // Align the gizmo to a different coordinate system.
+                                             // Use TransformGizmoPlugin::default() to align to the
+                                             // scene's coordinate system.
+            ),
+        ))
+        .add_plugins(PanOrbitCameraPlugin)
         .add_plugins(EguiPlugin)
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VoxMeshPlugin::default())
@@ -24,7 +39,18 @@ fn main() {
         .insert_resource(BoyEntity { boy_entity: None })
         .insert_resource(FaceNow::default())
         .add_systems(Startup, setup)
-        .add_systems(Update, (load_mate, load_boy, toggle_faces, show_joints))
+        .add_systems(
+            Update,
+            (
+                load_mate,
+                load_boy,
+                toggle_faces,
+                show_pick,
+                toggle_visible_animated_joint,
+                toggle_camera_controls_system,
+                auto_toggle_camera_controls_system,
+            ),
+        )
         // .add_systems(Update, load_ik)
         .run();
 }
@@ -53,6 +79,40 @@ impl Default for FaceNow {
 
 #[derive(Debug, Component)]
 pub struct ReadyEntity;
+
+// 自动切换镜头的转动
+fn auto_toggle_camera_controls_system(
+    mut pan_orbit_query: Query<&mut PanOrbitCamera>,
+    mut gizmo_query: Query<(
+        &mut TransformGizmo,
+        &mut PickingInteraction,
+        &GlobalTransform,
+    )>,
+) {
+    for (_gizmo, interaction, _transform) in gizmo_query.iter_mut() {
+        if *interaction == PickingInteraction::Pressed {
+            // 如果存在任何一个 是按下去的情况下
+            for mut pan_orbit in pan_orbit_query.iter_mut() {
+                pan_orbit.enabled = false;
+            }
+            return;
+        }
+    }
+    for mut pan_orbit in pan_orbit_query.iter_mut() {
+        pan_orbit.enabled = true;
+    }
+}
+
+fn toggle_camera_controls_system(
+    key_input: Res<Input<KeyCode>>,
+    mut pan_orbit_query: Query<&mut PanOrbitCamera>,
+) {
+    if key_input.just_pressed(KeyCode::T) {
+        for mut pan_orbit in pan_orbit_query.iter_mut() {
+            pan_orbit.enabled = !pan_orbit.enabled;
+        }
+    }
+}
 
 fn toggle_faces(
     keyboard_input: Res<Input<KeyCode>>,
@@ -105,6 +165,35 @@ fn show_joints(
     }
 }
 
+// 获取可以配置的 控制器
+fn show_pick(
+    mut commands: Commands,
+    query: Query<(Entity, &AnimatedJoint), Without<GizmoTransformable>>,
+) {
+    for (entity, _) in query.iter() {
+        commands.entity(entity).insert((
+            bevy_mod_picking::PickableBundle::default(),
+            bevy_mod_picking::backends::raycast::RaycastPickTarget::default(),
+            bevy_transform_gizmo::GizmoTransformable,
+        ));
+    }
+}
+
+fn toggle_visible_animated_joint(
+    mut query: Query<(&mut Visibility, &AnimatedJoint)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::V) {
+        for (mut visibility, _) in query.iter_mut() {
+            match *visibility {
+                Visibility::Inherited => *visibility = Visibility::Hidden,
+                Visibility::Hidden => *visibility = Visibility::Inherited,
+                Visibility::Visible => *visibility = Visibility::Hidden,
+            }
+        }
+    }
+}
+
 fn load_boy(
     mut commands: Commands,
     boy_mate: Res<BoyMate>,
@@ -139,6 +228,7 @@ fn load_boy(
                     mesh_assets.as_mut(),
                     skinned_mesh_inverse_bindposes_assets.as_mut(),
                     config_map,
+                    stdmats.as_mut(),
                 );
                 // TODO 这里使用其他方法准备数据!
                 let boy = commands
@@ -203,10 +293,22 @@ fn setup(
     let mate_data_handle: Handle<VoxSceneInfo> = assets.load("boy.vox#scene");
     boy_mate.handle = Some(mate_data_handle);
 
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+    // 添加环境光照
+    commands.insert_resource(AmbientLight {
+        brightness: 1.06,
         ..Default::default()
     });
+
+    commands
+        .spawn(Camera3dBundle {
+            transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..Default::default()
+        })
+        .insert((
+            bevy_mod_picking::backends::raycast::RaycastPickCamera::default(),
+            bevy_transform_gizmo::GizmoPickSource::default(),
+            PanOrbitCamera::default(),
+        ));
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {

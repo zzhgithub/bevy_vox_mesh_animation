@@ -13,3 +13,11 @@ bevy-inspector-egui = "0.19.0"
 bevy_egui = "0.21.0"
 dot_vox = "5.1.1"
 bevy_mod_mesh_tools = { git = "https://github.com/DGriffin91/bevy_mod_mesh_tools.git" }
+bevy_transform_gizmo = "0.8.0"
+bevy_mod_raycast = "0.13"
+bevy_mod_picking = { version = "0.15", default-features = false, features = [
+    "selection",
+    "backend_raycast",
+    "highlight",
+] }
+bevy_panorbit_camera = { version = "0.8.0", features = ["bevy_egui"] }
